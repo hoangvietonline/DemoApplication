@@ -3,7 +3,7 @@ package com.example.demoapplication.ui.main
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -24,8 +24,18 @@ class MainActivity : AppCompatActivity() {
         recyclerViewMain.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
         addPerson()
         fab.setOnClickListener {
-            val intent = Intent(this,RegisterActivity::class.java)
-            startActivityForResult(intent,1)
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivityForResult(intent, 1)
+        }
+        mAdapter.setOnItemClickListener(object : PersonAdapter.OnClickItemListener {
+            override fun onClickItem(position: Int) {
+                showDialog(personList[position])
+            }
+        })
+        setSupportActionBar(toolbar)
+        supportActionBar?.apply {
+            setDisplayHomeAsUpEnabled(false)
+            setDisplayShowTitleEnabled(true)
         }
     }
 
@@ -34,15 +44,36 @@ class MainActivity : AppCompatActivity() {
             personList = DatabaseClient.getDatabase(this@MainActivity).getAllListPerson()
             runOnUiThread {
                 mAdapter.addListPerson(personList)
-                Log.d("TAG", "addPerson: " + personList[0].address)
             }
         }).start()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1 && resultCode == Activity.RESULT_OK){
+        if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
             addPerson()
         }
+    }
+
+    private fun showDialog(person: Person) {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Delete Person")
+            .setMessage("Are you sure to delete?")
+            .setNegativeButton("Cancel") { dialog, _ -> dialog.dismiss() }
+            .setPositiveButton(
+                "Yes"
+            ) { dialog, _ ->
+                Thread(Runnable {
+                    DatabaseClient.getDatabase(this@MainActivity).deletePerson(person)
+                    personList.remove(person)
+                    runOnUiThread {
+                        mAdapter.addListPerson(personList)
+                    }
+                }).start()
+
+                dialog.dismiss()
+            }
+        dialog.show()
+
     }
 }

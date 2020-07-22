@@ -32,6 +32,9 @@ class PersonAdapter : RecyclerView.Adapter<PersonAdapter.PersonViewHolder>() {
         val person = personList[position]
         holder.itemView.tvNameItem.text = person.name
         holder.itemView.tvPhoneItem.text = person.phone
+        holder.itemView.setOnClickListener {
+            onClickItemListener?.onClickItem(position)
+        }
 
     }
 
